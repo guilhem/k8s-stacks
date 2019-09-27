@@ -1,0 +1,15 @@
+repositories:
+  - name: platformers
+    url: https://platformerscharts.z6.web.core.windows.net/ 
+
+releases:
+  - name: cert-manager-crds
+    labels:
+      stack: ingress
+      project: test
+    chart: platformers/cert-manager-crds
+    version: ~0.8.0
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system

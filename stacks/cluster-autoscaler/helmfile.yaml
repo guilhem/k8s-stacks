@@ -1,0 +1,32 @@
+# Cluster Autoscaler Stack
+
+releases:
+  - name: cluster-autoscaler
+    namespace: cluster-autoscaler
+    labels:
+      stack: cluster-autoscaler
+      project: test
+    chart: stable/cluster-autoscaler
+    version: ~0.13.2
+    values:
+    - 
+      azureClientID: {{ requiredEnv "AZ_CLIENT_ID" }}
+      azureClientSecret: {{ requiredEnv "AZ_CLIENT_SECRET" }}
+      azureResourceGroup: {{ requiredEnv "AZ_RESOURCE_GROUP" }}
+      azureSubscriptionID: {{ requiredEnv "AZ_SUBSCRIPTION_ID" }}
+      azureTenantID: {{ requiredEnv "AZ_TENANT_ID" }}
+      azureClusterName: {{ requiredEnv "AZ_CLUSTER_NAME" }}
+      azureNodeResourceGroup: {{ requiredEnv "AZ_NODE_RESOURCE_GROUP" }}
+      cloudProvider: azure
+      autoscalingGroups:
+        - name: {{ requiredEnv "AZ_NODE_POOL_NAME" }}
+          maxSize: 5
+          minSize: 1
+      azureVMType: "AKS"
+      rbac:
+        create: true
+
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system

@@ -1,0 +1,15 @@
+# Security Stack
+
+releases:
+  # kured: https://github.com/weaveworks/kured
+  - name: kured
+    namespace: security
+    labels:
+      stack: security
+      project: test
+    chart: stable/kured
+    version: ~1.2.0
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system

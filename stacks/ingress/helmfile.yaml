@@ -1,0 +1,105 @@
+repositories:
+  - name: jetstack
+    url: https://charts.jetstack.io
+  - name: platformers
+    url: ???
+
+# Ingress Stack
+
+releases:
+  # nginx ingress controller
+  - name: nginx
+    namespace: ingress
+    labels:
+      stack: ingress
+      project: test
+    chart: stable/nginx-ingress
+    version: ~0.24.1
+    values:
+    - controller:
+        podLabels:
+          app: nginx-ingress
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - nginx-ingress
+                topologyKey: "kubernetes.io/hostname"
+              weight: 1
+        publishService:
+          enabled: true
+        replicaCount: {{ env "INGRESS_REPLICAS" | default "2" }} 
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system
+
+  # Cert-manager
+  - name: cert-manager
+    namespace: ingress
+    labels:
+      stack: ingress
+      project: test
+    chart: jetstack/cert-manager
+    version: ~0.7.0
+    values:
+    - webhook:
+        enabled: false
+      image:
+        tag: v0.7.2
+      ingressShim:
+        defaultIssuerName: letsencrypt-prod
+        defaultIssuerKind: ClusterIssuer
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system
+
+  # Cert-manager Issuers
+  - name: cert-manager-issuers
+    namespace: ingress
+    labels:
+      stack: ingress
+      project: test
+    chart: ???/cert-manager-issuers
+    version: ~0.1.0
+    values:
+      - letsencrypt:
+          email: {{ requiredEnv "K8S_ISSUERS_EMAIL" }}
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system
+
+  # External-dns
+  - name: external-dns
+    namespace: ingress
+    labels:
+      stack: ingress
+      project: test
+    chart: stable/external-dns
+    version: ~1.7.0
+    values:
+    - provider: azure
+      rbac:
+        create: true
+        serviceAccountName: external-dns
+      txtPrefix: externaldns
+      securityContext:
+        runAsUser: 0
+      dryRun: false
+      extraArgs:
+        azure-resource-group: {{ requiredEnv "DNS_RESOURCE_GROUP" }}
+    wait: true
+    recreatePods: true
+    force: true
+    tillerNamespace: kube-system
+
+helmfiles:
+- path: requirements/00-cert-manager-crd.yaml
+
